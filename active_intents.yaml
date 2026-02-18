@@ -1,0 +1,59 @@
+# Active Intents Configuration
+# This file defines available intents that can be selected to modify assistant behavior
+
+intents:
+  # Bug fixing intent - focuses on debugging and fixing issues
+  - id: bug_fix
+    name: "Bug Fix"
+    description: "Focus on identifying and fixing bugs in the codebase"
+    context:
+      - "Analyze error messages carefully"
+      - "Check for null/undefined values"
+      - "Review recent changes"
+      - "Test edge cases"
+
+  # Code review intent - focuses on reviewing code quality
+  - id: code_review
+    name: "Code Review"
+    description: "Review code for quality, security, and best practices"
+    context:
+      - "Check for code smells"
+      - "Look for security vulnerabilities"
+      - "Verify adherence to coding standards"
+      - "Suggest improvements"
+
+  # Refactoring intent - focuses on improving code structure
+  - id: refactor
+    name: "Refactor"
+    description: "Improve code structure without changing functionality"
+    context:
+      - "Simplify complex logic"
+      - "Remove duplicate code"
+      - "Improve naming"
+      - "Extract reusable components"
+
+  # Documentation intent - focuses on creating documentation
+  - id: documentation
+    name: "Documentation"
+    description: "Create and improve documentation"
+    context:
+      - "Write clear explanations"
+      - "Include code examples"
+      - "Document APIs thoroughly"
+      - "Keep docs in sync with code"
+
+  # Testing intent - focuses on writing and running tests
+  - id: testing
+    name: "Testing"
+    description: "Write and maintain tests"
+    context:
+      - "Write comprehensive unit tests"
+      - "Cover edge cases"
+      - "Maintain test coverage"
+      - "Use descriptive test names"
+
+  # Default intent - no specific focus
+  - id: default
+    name: "General"
+    description: "General purpose assistance"
+    context: []

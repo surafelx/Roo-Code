@@ -37,6 +37,8 @@ import { generateImageTool } from "../tools/GenerateImageTool"
 import { applyDiffTool as applyDiffToolClass } from "../tools/ApplyDiffTool"
 import { isValidToolName, validateToolUse } from "../tools/validateToolUse"
 import { codebaseSearchTool } from "../tools/CodebaseSearchTool"
+import { selectActiveIntentTool } from "../tools/SelectActiveIntentTool"
+import { IntentPreHook } from "../services/IntentPreHook"
 
 import { formatResponse } from "../prompts/responses"
 import { sanitizeToolUseId } from "../../utils/tool-id"
@@ -675,7 +677,22 @@ export async function presentAssistantMessage(cline: Task) {
 				}
 			}
 
+			// Pre-Hook: Execute intent-based pre-processing before tool execution
+			// This allows us to intercept every tool call and apply intent-specific logic
+			const shouldProceed = await IntentPreHook.executePreHook(cline, block)
+			if (!shouldProceed) {
+				pushToolResult(formatResponse.toolError("Tool execution blocked by active intent pre-hook."))
+				break
+			}
+
 			switch (block.name) {
+				case "select_active_intent":
+					await selectActiveIntentTool.handle(cline, block as ToolUse<"select_active_intent">, {
+						askApproval,
+						handleError,
+						pushToolResult,
+					})
+					break
 				case "write_to_file":
 					await checkpointSaveAndMark(cline)
 					await writeToFileTool.handle(cline, block as ToolUse<"write_to_file">, {

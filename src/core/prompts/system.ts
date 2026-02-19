@@ -24,6 +24,7 @@ import {
 	markdownFormattingSection,
 	getSkillsSection,
 } from "./sections"
+import { getActiveIntentContext } from "../services/IntentPreHook"
 
 // Helper function to get prompt component, filtering out empty objects
 export function getPromptComponent(
@@ -79,6 +80,11 @@ async function generatePrompt(
 		getSkillsSection(skillsManager, mode as string),
 	])
 
+	// Get active intent context for injection into prompts
+	const activeIntentContext = getActiveIntentContext()
+	const activeIntentSection =
+		activeIntentContext.length > 0 ? `\n\n## Active Intent Context\n${activeIntentContext.join("\n")}\n` : ""
+
 	// Tools catalog is not included in the system prompt.
 	const toolsCatalog = ""
 
@@ -93,7 +99,12 @@ ${getSharedToolUseSection()}${toolsCatalog}
 ${getCapabilitiesSection(cwd, shouldIncludeMcp ? mcpHub : undefined)}
 
 ${modesSection}
-${skillsSection ? `\n${skillsSection}` : ""}
+${
+	skillsSection
+		? `
+${skillsSection}`
+		: ""
+}${activeIntentSection}
 ${getRulesSection(cwd, settings)}
 
 ${getSystemInfoSection(cwd)}

@@ -38,6 +38,7 @@ import { applyDiffTool as applyDiffToolClass } from "../tools/ApplyDiffTool"
 import { isValidToolName, validateToolUse } from "../tools/validateToolUse"
 import { codebaseSearchTool } from "../tools/CodebaseSearchTool"
 import { selectActiveIntentTool } from "../tools/SelectActiveIntentTool"
+import { recordLessonTool } from "../tools/RecordLessonTool"
 import { IntentPreHook } from "../services/IntentPreHook"
 
 import { formatResponse } from "../prompts/responses"
@@ -688,6 +689,13 @@ export async function presentAssistantMessage(cline: Task) {
 			switch (block.name) {
 				case "select_active_intent":
 					await selectActiveIntentTool.handle(cline, block as ToolUse<"select_active_intent">, {
+						askApproval,
+						handleError,
+						pushToolResult,
+					})
+					break
+				case "record_lesson":
+					await recordLessonTool.handle(cline, block as ToolUse<"record_lesson">, {
 						askApproval,
 						handleError,
 						pushToolResult,

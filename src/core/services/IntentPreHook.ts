@@ -1,6 +1,9 @@
 import { SelectActiveIntentTool } from "../tools/SelectActiveIntentTool"
 import { Task } from "../task/Task"
 import type { ToolUse } from "../../shared/tools"
+import { ParallelOrchestrationService } from "./ParallelOrchestrationService"
+import * as fs from "fs"
+import * as path from "path"
 
 /**
  * Pre-Hook service that intercepts tool execution
@@ -17,6 +20,19 @@ export class IntentPreHook {
 	static async executePreHook(cline: Task, toolBlock: ToolUse): Promise<boolean> {
 		// Get the active intent
 		const activeIntent = SelectActiveIntentTool.getActiveIntent()
+
+		// PARALLEL ORCHESTRATION: Check for stale files before write operations
+		// This prevents parallel agents from overwriting each other's changes
+		const staleCheck = await ParallelOrchestrationService.checkWritePreConditions(cline, toolBlock)
+		if (!staleCheck.shouldProceed) {
+			console.log(`[IntentPreHook] Blocked ${toolBlock.name} due to stale file`)
+			return false
+		}
+
+		// TRACK READ FILES: Track file reads for later staleness detection
+		if (toolBlock.name === "read_file") {
+			await this.trackReadFile(cline, toolBlock)
+		}
 
 		if (!activeIntent) {
 			// No active intent, allow execution
@@ -41,6 +57,34 @@ export class IntentPreHook {
 		// }
 
 		return true
+	}
+
+	/**
+	 * Track a file that was read for staleness detection
+	 * This enables parallel orchestration to detect when files have been modified
+	 */
+	private static async trackReadFile(cline: Task, toolBlock: ToolUse): Promise<void> {
+		const filePath = toolBlock.params.path
+		if (!filePath) return
+
+		const absolutePath = path.resolve(cline.cwd, filePath)
+		
+		try {
+			// Only track if file exists
+			await fs.promises.access(absolutePath)
+			
+			const content = await fs.promises.readFile(absolutePath, "utf-8")
+			const activeIntent = SelectActiveIntentTool.getActiveIntent()
+			
+			ParallelOrchestrationService.trackFileRead(
+				cline.taskId,
+				absolutePath,
+				content,
+				activeIntent?.id
+			)
+		} catch {
+			// File doesn't exist or can't be read - skip tracking
+		}
 	}
 
 	/**
